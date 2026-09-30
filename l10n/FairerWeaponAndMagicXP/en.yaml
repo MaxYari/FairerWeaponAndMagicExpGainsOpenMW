@@ -1,0 +1,71 @@
+page_name: "Fairer Weapon and Magic Experience Gain"
+page_description: "Magic experience that follows the magic: costly spells teach more, miscasts teach a little, and conjured gear and shield spells teach their own school."
+
+settings_group: "Experience"
+settings_group_description: |-
+  A successful cast teaches as it does in vanilla up to the first cost below, more above it, and the
+  most at the second. With the defaults that is simply the cost / 15: every spell between 15 and 75
+  magicka teaches the same per point of magicka, so casting the spells you actually need is never
+  the slower way to learn.
+
+base_cost: "Cost of a vanilla spell"
+base_cost_description: |-
+  A spell costing this much magicka or less teaches exactly what it does in vanilla: Fireball (5),
+  Fire Bite (6), Greater Fireball (10), Shield (15).
+
+top_cost: "Cost of a top spell"
+top_cost_description: |-
+  At this cost a cast teaches the most it can, and a costlier one teaches no more.
+
+max_multiplier: "Most a cast can teach"
+max_multiplier_description: |-
+  How many times what a vanilla cast teaches, for a spell at the top cost or above.
+
+miscast_share: "Miscast experience"
+miscast_share_description: |-
+  A miscast teaches this share of what the cast would have had it worked. 0 turns it off. Running
+  out of magicka is not a miscast, and teaches nothing.
+
+bound_share: "Conjured gear share"
+bound_share_description: |-
+  Conjured gear teaches Conjuration this share of what it teaches its own skill, on top of it: a hit
+  with a bound weapon, a hit taken on a piece of bound armor, a block with a bound shield. 0 turns it
+  off.
+
+shield_share: "Shield spell share"
+shield_share_description: |-
+  A hit taken under a shield spell teaches the spell's school (Alteration): a weapon or a claw under
+  Shield this share of what it teaches your armor, fire under Fire Shield, frost under Frost Shield and
+  shock under Lightning Shield this share of a vanilla use. 0 turns it off.
+
+logging: "Log experience"
+logging_description: |-
+  Write a line to the console (F10) and openmw.log for every bit of experience this mod gives or
+  changes: which skill, how much, and what for.
+
+weapons_group: "Weapons"
+weapons_group_description: |-
+  A weapon hit teaches in step with how long the weapon's weakest swing takes - the attack animation
+  the game plays for it, at the weapon's speed, from wind-up to follow-through - and a full-strength
+  attack a third more. A swing that reaches its target and misses still teaches a little; a swing at the
+  air teaches nothing.
+
+melee_swing: "Melee seconds per vanilla hit"
+melee_swing_description: |-
+  This many seconds of a melee weapon's weakest swing teach what one vanilla hit does. 0.5: a dagger
+  (0.31s) teaches 0.62x, a longsword (0.58s) 1.15x, a two-handed axe (0.64s) 1.29x.
+
+ranged_swing: "Ranged seconds per vanilla hit"
+ranged_swing_description: |-
+  The same for bows, crossbows and thrown weapons, whose draw and reload count in their swing. 0.75: a
+  bow (1.40s) teaches 1.87x, a crossbow (1.53s) 2.04x, a thrown knife (0.67s) 0.89x.
+
+strong_attack_bonus: "Full-strength bonus"
+strong_attack_bonus_description: |-
+  An attack wound up all the way teaches this much more than the weakest: 0.33 is a third more. One in
+  between, in step with how far it was wound up.
+
+miss_share: "Miss experience"
+miss_share_description: |-
+  A swing that reached its target and missed teaches this share of what it would have had it hit. 0
+  turns it off.
