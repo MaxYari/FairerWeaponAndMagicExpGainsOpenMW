@@ -7,8 +7,8 @@ In vanilla Morrowind every cast and every hit teaches the same, so the fastest w
   2.3x, anything from 75 magicka up 5x.
 - **Slow weapons teach more per hit, fast ones less.** A dagger hit teaches about 0.6x, a long sword
   1.15x, a two-handed axe 1.3x, a bow 1.9x. An attack wound up all the way teaches a third more.
-- **Miscasts and misses still teach a little**, up to the skill's next level.
-- **Bound gear also trains Conjuration**, and hits taken under a shield spell train Alteration.
+- **Miscasts and misses still teach a little**, exp up to the skill's current level cap but not beyound, you still need to secceed atleast once to receive that skill level up.
+- **Using Bound gear also trains Conjuration**, and hits taken under a shield spell train Alteration.
 
 Every number is a setting: Options -> Scripts -> Fairer Weapon and Magic Experience Gain.
 
