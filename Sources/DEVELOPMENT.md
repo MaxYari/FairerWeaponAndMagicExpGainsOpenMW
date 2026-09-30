@@ -294,6 +294,9 @@ charges Mage Fury from it and splits every `Weapon_SuccessfulHit`, PerksOfMorrow
 them - none of which a miscast or a miss should do. A successful cast's or hit's own gain is multiplied
 in place, and stays what it was.
 
+`I.FairerWeaponAndMagicXP` (player) has `spellMultiplier(spellRecord)`, `costMultiplier(cost)`,
+`spellCost(spellRecord)` and `swingProfile(weapon)`.
+
 ## Logging
 
 With "Log experience" on (the default), every gain this mod gives or changes is one `print` - the
