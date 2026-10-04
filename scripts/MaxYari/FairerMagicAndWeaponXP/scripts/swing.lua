@@ -56,20 +56,29 @@ M.SKILL = {
 
 -- Katars and Knuckledusters' weapons swing with the hand-to-hand animations, whatever the engine
 -- thinks they are: ReAnimation stretches the one-handed attack underneath to fit them.
+-- A record id is never one: only a weapon that has left the hand comes as one.
 local function isKatarsWeapon(weapon)
     local h2h = I.H2HWeapons
-    return weapon ~= nil and h2h ~= nil and h2h.kindOfItem ~= nil and h2h.kindOfItem(weapon) and true or false
+    return weapon ~= nil and type(weapon) ~= "string" and h2h ~= nil and h2h.kindOfItem ~= nil
+        and h2h.kindOfItem(weapon) and true or false
 end
 M.isKatarsWeapon = isKatarsWeapon
 
 --- A weapon's swing, or bare fists' for nil: { group, speed, skill, ranged, weak }, weak being the
---- seconds of its weakest swing at its speed. Nil for something that is no weapon.
+--- seconds of its weakest swing at its speed. Nil for something that is no weapon. `weapon` is the
+--- item, or its record id for one that has left the hand (actor.lua).
 function M.profile(weapon)
     if not weapon then
         return { group = "handtohand", speed = 1, skill = "handtohand", ranged = false, weak = M.WEAK_SWING.handtohand }
     end
-    if weapon.type ~= types.Weapon then return nil end
-    local record = types.Weapon.record(weapon)
+    local record = nil
+    if type(weapon) == "string" then
+        local ok, found = pcall(types.Weapon.record, weapon)
+        record = ok and found or nil
+    elseif weapon.type == types.Weapon then
+        record = types.Weapon.record(weapon)
+    end
+    if not record then return nil end
     local speed = record.speed
     if not speed or speed <= 0 then return nil end
     local group = isKatarsWeapon(weapon) and "handtohand" or GROUP[record.type]

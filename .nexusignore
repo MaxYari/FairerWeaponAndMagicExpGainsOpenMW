@@ -14,3 +14,8 @@ __pycache__/
 /README.nexus.bbcode
 imgs/
 Sources/
+
+# archives: Nexus quarantines an upload with an archive inside it
+*.zip
+*.7z
+*.rar

@@ -1,4 +1,7 @@
-# Local output of tools/build_nexus_zip.sh
+# Local output of tools/build_nexus_zip.sh, and any other archive: Nexus quarantines an archive inside one
 nexus-upload.zip
+*.zip
+*.7z
+*.rar
 __pycache__/
 .claude/

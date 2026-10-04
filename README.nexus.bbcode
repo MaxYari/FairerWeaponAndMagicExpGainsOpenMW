@@ -1,17 +1,17 @@
-[size=6][b]✦ Fairer Weapon and Magic Experience Gain[/b][/size]
+[size=6][b]✦ Fairer Magic and Weapon Experience Gains for Sane People[/b][/size]
 
-In vanilla Morrowind every cast and every hit teaches the same, so the fastest way to level is a 1-magicka spell or a dagger jab repeated a thousand times. Here experience follows what you actually do:
+A friendly adjustment of the way Magic and Weapon experience gains work. Doesnt aim to be an overhaul, but rather to simply illiminate some points of contention and unfairness, as well as reduce the dark-side pull of a common ways of exploiting the morrowind xp system for "effecient" skill leveling (quick attack spam, cheap "practice" spells). At the same time it's not an anti-cheese mod, previously "efficient" tactics are either slightly less efficient or as eficcient as before, BUT this mod makes normal skill use in combat more appealing and effective as a means of natural experience gain. The changes are quite succinct and are listed below:
 
 [list]
-[*][b]Costly spells teach more.[/b] Fire Bite (6 magicka) teaches as in vanilla, Lightning Storm (34) 2.3x, anything from 75 magicka up 5x.
-[*][b]Slow weapons teach more per hit, fast ones less.[/b] A dagger hit teaches about 0.6x, a long sword 1.15x, a two-handed axe 1.3x, a bow 1.9x. An attack wound up all the way teaches a third more.
-[*][b]Miscasts and misses still teach a little[/b], exp up to the skill's current level cap but not beyound, you still need to secceed atleast once to receive that skill level up.
-[*][b]Using Bound gear also trains Conjuration[/b], and hits taken under a shield spell train Alteration.
+[*][b]Magic XP scales with spell cost.[/b] Casting a spell that costs 15 or less magica grants 1x XP, while a spell costing 75 or more magica grants 5x XP.
+[*][b]Slow weapons grant more XP per hit, fast ones less.[/b] A dagger hit teaches about 0.6x, a long sword 1.15x, a two-handed axe 1.3x, a bow 1.9x. The exact multiplier depends on a true weapon speed, which is different from the speed displayed in the game since different weapons have different actual speed at 1.0 speed value due to differences in their animation durations.
+[*][b]Miscasts and misses still bring a little XP[/b] You do learn from your failures! Only 1/3 of xp that you would've gotten otherwise and, additionally this exp can not actually level up the skill, you still need to succeed atleast once to get over the level up threshold.
+[*][b]Conjuration XP from bound gear and Alteration XP from shields[/b], being hit while under an Alteration shield or actively using a Conjured equipment - grants extra XP of the appropriate magic school.
 [/list]
 
-Every number is a setting: Options -> Scripts -> Fairer Weapon and Magic Experience Gain.
+Adjustible in setting: Options -> Scripts -> Fairer Magic and Weapon XP.
 
-[url=https://ko-fi.com/maxyari][img]https://raw.githubusercontent.com/MaxYari/FairerWeaponAndMagicExpGainsOpenMW/main/imgs/head_like_a_hole_banner_left_half_bright148.webp[/img][/url][url=https://ko-fi.com/maxyari][img]https://raw.githubusercontent.com/MaxYari/FairerWeaponAndMagicExpGainsOpenMW/main/imgs/nexus/banner_right.png[/img][/url]
+[url=https://ko-fi.com/maxyari][img]https://raw.githubusercontent.com/MaxYari/FairerWeaponAndMagicExpGainsOpenMW/main/imgs/morrowind_kofi_banner_left_half_bright124.gif[/img][/url][url=https://ko-fi.com/maxyari][img]https://raw.githubusercontent.com/MaxYari/FairerWeaponAndMagicExpGainsOpenMW/main/imgs/nexus/banner_right.png[/img][/url]
 [url=https://ko-fi.com/maxyari][img]https://raw.githubusercontent.com/MaxYari/FairerWeaponAndMagicExpGainsOpenMW/main/imgs/nexus/banner_glow.png[/img][/url]
 
 [size=5][b]✦ How to install[/b][/size]
@@ -20,7 +20,7 @@ Every number is a setting: Options -> Scripts -> Fairer Weapon and Magic Experie
 [*][b]Requires OpenMW 0.51 or newer.[/b]
 [*]Install and enable [url=https://www.nexusmods.com/morrowind/mods/60256]Max Yari's Script Services (MSS)[/url], it's a required dependency.
 [*]Install this mod [b]with a mod organiser[/b]: download the archive (or this repository as an archive) and drag and drop it into your mod organiser of choice (e.g [url=https://github.com/ModOrganizer2/modorganizer/releases]Mod Organizer 2[/url] on Windows or [url=https://github.com/grazelandsnomad/nerevarine_organizer/releases/tag/v0.70]Nerevarine Organizer[/url] on Linux). [b]Or[/b] [url=https://modding-openmw.com/tips/installing-mods/]read this tutorial[/url] on how to install mods using the launcher or completely manually (it's also very easy).
-[*]Enable [font=Courier New]FairerWeaponAndMagicXP.omwscripts[/font] in the "Content Files" tab of the OpenMW launcher, after [font=Courier New]MaxYariScriptServices.omwscripts[/font].
+[*]Enable [font=Courier New]FairerMagicAndWeaponXP.omwscripts[/font] in the "Content Files" tab of the OpenMW launcher, after [font=Courier New]MaxYariScriptServices.omwscripts[/font].
 [/list]
 
 Safe to add to or remove from a game in progress.
@@ -30,3 +30,7 @@ Safe to add to or remove from a game in progress.
 Don't combine it with other mods that scale magic or weapon experience (MBSP, Skill Uses Scaled, NCGDMW's magicka-based progression) - both would scale the same experience. Skill uncappers and level-up overhauls are fine.
 
 Modders: how it works, and its interface, is in the [url=https://github.com/MaxYari/FairerWeaponAndMagicExpGainsOpenMW/blob/main/Sources/DEVELOPMENT.md]technical notes[/url].
+
+[size=5][b]✦ AI disclaimer[/b][/size]
+
+This mod is 95% AI slop, this kind of minor rebalance sounded like a great idea to me, especially in a context of my current playthough and I was not satisfied with the existing solutions (they are either too overloaded or just dont do what this mod does). I also had a paid slopmachine subscription at the time, so slopping this out was fairly straightforward. I am still using this in my playthrough and am quite satisfied with how sublte yet fair the changes are, so I think the mod deserved a right to not just be considered a mere slop. Cheers!

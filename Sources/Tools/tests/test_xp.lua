@@ -75,7 +75,7 @@ stubs.load()
 stubs.cast(thirty, false)
 check(near(stubs.taughtTo("destruction"), 0.66), "a miscast of 30 magicka teaches a third of 2x",
       stubs.taughtTo("destruction"))
-check(st.taught[1] and st.taught[1].params.useType == nil and st.taught[1].params.fairerWeaponAndMagicXP == "miscast",
+check(st.taught[1] and st.taught[1].params.useType == nil and st.taught[1].params.fairerMagicAndWeaponXP == "miscast",
       "as a use of no type, so nothing takes it for a cast")
 stubs.update()
 check(#st.taught == 1, "once")
@@ -116,7 +116,7 @@ stubs.skillUse("destruction", 0)
 check(near(stubs.taughtTo("destruction"), 5), "a cast with no animation still scales")
 
 stubs.load()
-stubs.skillUsed("alteration", { skillGain = 1, fairerWeaponAndMagicXP = "test" })
+stubs.skillUsed("alteration", { skillGain = 1, fairerMagicAndWeaponXP = "test" })
 check(near(stubs.taughtTo("alteration"), 1), "its own gains pass through untouched")
 
 --- Conjured gear ------------------------------------------------------------------------------------
@@ -280,7 +280,7 @@ check(near(stubs.taughtTo("shortblade"), daggerX) and about(daggerX, 0.622), "a 
 stubs.report { strength = 1, weapon = dagger }
 check(near(stubs.taughtTo("shortblade"), daggerX * 1.33), "a full-strength one: a third more, when reported",
       stubs.taughtTo("shortblade"))
-check(st.taught[2].params.fairerWeaponAndMagicXP == "weaponHit" and st.taught[2].params.useType == nil,
+check(st.taught[2].params.fairerMagicAndWeaponXP == "weaponHit" and st.taught[2].params.useType == nil,
       "the third as a gain of its own")
 
 stubs.load()
@@ -328,7 +328,7 @@ check(near(stubs.taughtTo("marksman"), 1.4 / 0.75), "a bow: 1.87x", stubs.taught
 stubs.load()
 stubs.report { successful = false, strength = 0, weapon = longsword }
 check(near(stubs.taughtTo("longblade"), 0.2 * swordX), "a missed weak swing teaches a fifth", stubs.taughtTo("longblade"))
-check(st.taught[1].params.fairerWeaponAndMagicXP == "miss", "as a miss")
+check(st.taught[1].params.fairerMagicAndWeaponXP == "miss", "as a miss")
 
 stubs.load(katars)
 st.sections.SettingsGlobalH2HWeapons = { handToHandShare = 0.7 }
@@ -351,6 +351,20 @@ check(#st.taught == 0, "a hit report with no hit to it teaches nothing")
 stubs.load()
 stubs.skillUse("marksman", 0) -- the last throwing knife left the hand before it landed
 check(near(stubs.taughtTo("marksman"), 1), "marksman with an empty hand: left alone")
+
+-- A thrown weapon's report names it by record id: the item itself is gone by then (actor.lua).
+local knife = stubs.item("weapon", "iron throwing knife", 2, { type = WT.MarksmanThrown, speed = 1.5 })
+local knifeX = 0.665 / 1.5 / 0.75
+stubs.load()
+stubs.report { successful = false, strength = 0, weapon = knife.recordId }
+check(near(stubs.taughtTo("marksman"), 0.2 * knifeX), "a missed throw teaches a fifth of a thrown hit",
+      stubs.taughtTo("marksman"))
+stubs.load()
+st.right = knife
+stubs.skillUse("marksman", 0)
+stubs.report { strength = 1, weapon = knife.recordId }
+check(near(stubs.taughtTo("marksman"), knifeX * 1.33), "and a full-strength throw that lands a third more",
+      stubs.taughtTo("marksman"))
 
 --- No level up from a miss -------------------------------------------------------------------------
 -- A miss or a miscast fills the skill up to just short of its next level; a success is what crosses it.
@@ -406,13 +420,23 @@ local onHit = stubs.loadActor()
 onHit({ attacker = stubs.player, successful = false, strength = 0.4, type = 2, weapon = longsword, sourceType = "melee" })
 onHit({ attacker = stubs.enemy, successful = true, strength = 1, type = 0, sourceType = "melee" })
 onHit({ attacker = stubs.player, successful = true, sourceType = "magic" })
-check(#st.sent == 1 and st.sent[1].name == "FairerWeaponAndMagicXP_Attack", "reports the player's attacks only, not spells",
+check(#st.sent == 1 and st.sent[1].name == "FairerMagicAndWeaponXP_Attack", "reports the player's attacks only, not spells",
       #st.sent)
 local sent = st.sent[1] and st.sent[1].data or {}
 check(sent.successful == false and sent.strength == 0.4 and sent.type == 2 and sent.weapon == longsword,
       "with whether it landed, its strength, its type and the weapon")
 
+local thrown = stubs.item("weapon", "iron throwing knife", 2, { type = WT.MarksmanThrown, speed = 1.5 })
+thrown.gone = true
+onHit({ attacker = stubs.player, successful = true, strength = 1, weapon = thrown, ammo = "iron throwing knife",
+    sourceType = "ranged" })
+sent = st.sent[2] and st.sent[2].data or {}
+check(sent.weapon == "iron throwing knife", "a thrown weapon, gone once thrown, by its record id", sent.weapon)
+
 --- Logging ----------------------------------------------------------------------------------------
+check(require("scripts/MaxYari/FairerMagicAndWeaponXP/scripts/settings").DEFAULTS.logging == false,
+      "Debug Logging is off by default")
+
 local function capture(fn)
     local lines, print_ = {}, print
     print = function(s) lines[#lines + 1] = s end
@@ -421,7 +445,7 @@ local function capture(fn)
     return table.concat(lines, "\n"), #lines
 end
 
-stubs.load(function() st.settings.logging = true end)
+stubs.load(function() st.debugSettings.logging = true end)
 local out = capture(function()
     stubs.cast(thirty, true)
     stubs.cast(thirty, false)
@@ -431,8 +455,8 @@ local out = capture(function()
     stubs.report { successful = false, type = 2, strength = 0, weapon = longsword }
 end)
 local function has(text) return out:find(text, 1, true) ~= nil end
-check(has("[FairerWeaponAndMagicXP] destruction 1.00 -> 2.00 | cast thirty | x2.00 for its cost, 30 magicka"), "a cast", out)
-check(has("[FairerWeaponAndMagicXP] destruction +0.66 | miscast thirty | x2.00 for its cost, 30 magicka")
+check(has("[FairerMagicAndWeaponXP] destruction 1.00 -> 2.00 | cast thirty | x2.00 for its cost, 30 magicka"), "a cast", out)
+check(has("[FairerMagicAndWeaponXP] destruction +0.66 | miscast thirty | x2.00 for its cost, 30 magicka")
       and has("x0.33 for a miscast"), "a miscast")
 check(has("longblade 1.00 -> 1.15 | hit with steel longsword | x1.15 for the weapon: its weakest swing takes 0.58s (1x per 0.50s melee); the strength when reported"),
       "a hit, at once", out)
@@ -454,7 +478,7 @@ local printed, count = capture(function()
     stubs.skillUse("heavyarmor", 0)
 end)
 check(near(stubs.taughtTo("heavyarmor"), 2), "an error in this mod never costs a skill its experience")
-check(count == 1 and printed:find("FairerWeaponAndMagicXP", 1, true), "and is reported once", count)
+check(count == 1 and printed:find("FairerMagicAndWeaponXP", 1, true), "and is reported once", count)
 
 -- MSS is required: without it, say so and do nothing.
 stubs.load(function() st.contentFiles["MaxYariScriptServices.omwscripts"] = nil end)
@@ -474,6 +498,43 @@ stubs.report { successful = false, type = 0, weapon = longsword }
 stubs.update()
 check(stubs.taughtTo("destruction") + stubs.taughtTo("conjuration") + stubs.taughtTo("alteration")
       + stubs.taughtTo("longblade") == 0, "every share at 0 turns its part off")
+
+-- "Fairify magic XP" off: casts, conjured gear and shield spells as in vanilla, weapons as they were.
+stubs.load(function() st.settings.fairifyMagicXP = false end)
+stubs.cast(godsFire, true)
+stubs.cast(godsFire, false)
+bind()
+st.right = stubs.item("weapon", "bound_longsword")
+stubs.skillUse("longblade", 0)
+st.effects.shield, st.effects.fireshield = 10, 10
+stubs.skillUse("heavyarmor", 0)
+landed("bolt", "FireDamage")
+stubs.damaged()
+stubs.update()
+check(near(stubs.taughtTo("destruction"), 1), "magic off: a cast teaches as in vanilla, a miscast nothing",
+      stubs.taughtTo("destruction"))
+check(stubs.taughtTo("conjuration") + stubs.taughtTo("alteration") == 0, "and conjured gear and shields nothing")
+stubs.load(function() st.settings.fairifyMagicXP = false end)
+st.right = longsword
+stubs.skillUse("longblade", 0)
+check(near(stubs.taughtTo("longblade"), swordX), "while weapons still scale", stubs.taughtTo("longblade"))
+
+-- "Fairify weapon XP" off: hits as in vanilla, misses nothing, magic as it was.
+stubs.load(function() st.weaponSettings.fairifyWeaponXP = false end)
+st.right = longsword
+stubs.skillUse("longblade", 0)
+stubs.report { strength = 1, weapon = longsword }
+stubs.report { successful = false, strength = 1, weapon = longsword }
+check(near(stubs.taughtTo("longblade"), 1), "weapons off: a hit teaches as in vanilla, at any strength, a miss nothing",
+      stubs.taughtTo("longblade"))
+stubs.cast(thirty, true)
+check(near(stubs.taughtTo("destruction"), 2), "while casts still scale", stubs.taughtTo("destruction"))
+bind()
+st.right = stubs.item("weapon", "bound_longsword")
+stubs.skillUse("longblade", 0)
+stubs.update()
+check(near(stubs.taughtTo("conjuration"), 0.33), "and a bound weapon still teaches Conjuration",
+      stubs.taughtTo("conjuration"))
 
 print(string.format("\n%d checks, %d failures", checks, fails))
 os.exit(fails == 0 and 0 or 1)

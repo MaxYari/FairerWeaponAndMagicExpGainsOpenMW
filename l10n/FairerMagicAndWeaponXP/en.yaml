@@ -1,12 +1,20 @@
-page_name: "Fairer Weapon and Magic Experience Gain"
+page_name: "Fairer Magic and Weapon XP"
 page_description: "Magic experience that follows the magic: costly spells teach more, miscasts teach a little, and conjured gear and shield spells teach their own school."
 
-settings_group: "Experience"
-settings_group_description: |-
+# The banner's group and its one row, both nameless: the picture is all there is to them.
+banner: ""
+
+magic_group: "Magic"
+magic_group_description: |-
   A successful cast teaches as it does in vanilla up to the first cost below, more above it, and the
   most at the second. With the defaults that is simply the cost / 15: every spell between 15 and 75
   magicka teaches the same per point of magicka, so casting the spells you actually need is never
   the slower way to learn.
+
+fairify_magic_xp: "Fairify magic XP"
+fairify_magic_xp_description: |-
+  Off, the mod leaves magic alone: casts teach as they do in vanilla, a miscast teaches nothing, and
+  conjured gear and shield spells teach nothing to their school. The settings below then do nothing.
 
 base_cost: "Cost of a vanilla spell"
 base_cost_description: |-
@@ -19,7 +27,8 @@ top_cost_description: |-
 
 max_multiplier: "Most a cast can teach"
 max_multiplier_description: |-
-  How many times what a vanilla cast teaches, for a spell at the top cost or above.
+  How many times what a vanilla cast teaches, for a spell at the top cost or above. 1.0 turns off the
+  scaling with magicka cost: every cast teaches as it does in vanilla.
 
 miscast_share: "Miscast experience"
 miscast_share_description: |-
@@ -38,27 +47,20 @@ shield_share_description: |-
   Shield this share of what it teaches your armor, fire under Fire Shield, frost under Frost Shield and
   shock under Lightning Shield this share of a vanilla use. 0 turns it off.
 
-logging: "Log experience"
-logging_description: |-
-  Write a line to the console (F10) and openmw.log for every bit of experience this mod gives or
-  changes: which skill, how much, and what for.
-
 weapons_group: "Weapons"
 weapons_group_description: |-
   A weapon hit teaches in step with how long the weapon's weakest swing takes - the attack animation
   the game plays for it, at the weapon's speed, from wind-up to follow-through - and a full-strength
-  attack a third more. A swing that reaches its target and misses still teaches a little; a swing at the
-  air teaches nothing.
+  attack a third more. Half a second of a melee swing teaches what one vanilla hit does: a dagger
+  (0.31s) teaches 0.62x, a longsword (0.58s) 1.15x, a two-handed axe (0.64s) 1.29x. Bows, crossbows and
+  thrown weapons count their draw and reload, and three quarters of a second of theirs teaches one hit:
+  a bow (1.40s) teaches 1.87x, a crossbow (1.53s) 2.04x, a thrown knife (0.67s) 0.89x. A swing that
+  reaches its target and misses still teaches a little; a swing at the air teaches nothing.
 
-melee_swing: "Melee seconds per vanilla hit"
-melee_swing_description: |-
-  This many seconds of a melee weapon's weakest swing teach what one vanilla hit does. 0.5: a dagger
-  (0.31s) teaches 0.62x, a longsword (0.58s) 1.15x, a two-handed axe (0.64s) 1.29x.
-
-ranged_swing: "Ranged seconds per vanilla hit"
-ranged_swing_description: |-
-  The same for bows, crossbows and thrown weapons, whose draw and reload count in their swing. 0.75: a
-  bow (1.40s) teaches 1.87x, a crossbow (1.53s) 2.04x, a thrown knife (0.67s) 0.89x.
+fairify_weapon_xp: "Fairify weapon XP"
+fairify_weapon_xp_description: |-
+  Off, the mod leaves weapons alone: a hit teaches as it does in vanilla and a miss teaches nothing.
+  The settings below then do nothing.
 
 strong_attack_bonus: "Full-strength bonus"
 strong_attack_bonus_description: |-
@@ -69,3 +71,10 @@ miss_share: "Miss experience"
 miss_share_description: |-
   A swing that reached its target and missed teaches this share of what it would have had it hit. 0
   turns it off.
+
+debug_group: "Debug"
+
+logging: "Debug Logging"
+logging_description: |-
+  Write a line to the console (F10) and openmw.log for every bit of experience this mod gives or
+  changes: which skill, how much, and what for.

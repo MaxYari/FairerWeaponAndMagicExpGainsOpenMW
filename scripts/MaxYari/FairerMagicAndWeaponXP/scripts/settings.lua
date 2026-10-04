@@ -6,12 +6,17 @@ local storage = require('openmw.storage')
 
 local M = {}
 
--- Two groups on the settings page, magic and weapons, each its own storage section.
-M.GROUP = "SettingsPlayerFairerWeaponAndMagicXP"
-M.WEAPONS_GROUP = "SettingsPlayerFairerWeaponAndMagicXPWeapons"
+-- Three groups on the settings page, magic, weapons and debug, each its own storage section. Above
+-- them, the banner: a group of its own that stores nothing.
+M.BANNER_GROUP = "SettingsPlayerFairerMagicAndWeaponXPBanner"
+M.MAGIC_GROUP = "SettingsPlayerFairerMagicAndWeaponXPMagic"
+M.WEAPONS_GROUP = "SettingsPlayerFairerMagicAndWeaponXPWeapons"
+M.DEBUG_GROUP = "SettingsPlayerFairerMagicAndWeaponXPDebug"
 
 -- Defaults, also the registered defaults in player.lua.
 M.DEFAULTS = {
+    -- Magic. Off, casts, conjured gear and shield spells teach as they do in vanilla.
+    fairifyMagicXP = true,
     -- A spell costing this much or less teaches as it does in vanilla: Fireball (5), Fire Bite (6),
     -- Greater Fireball (10), Shield (15).
     baseCost = 15,
@@ -26,23 +31,25 @@ M.DEFAULTS = {
     boundShare = 0.33,
     -- Of what a hit teaches your armor skill, taught to the shield spell's own school as well.
     shieldShare = 0.33,
-    -- Weapons. A hit teaches in step with how long the weapon's weakest swing takes, wind-up to the end
-    -- of the follow-through: this many seconds of it teach what one vanilla hit does. Ranged attacks
-    -- count their draw and reload, so theirs is a longer measure.
-    meleeSwing = 0.5,
-    rangedSwing = 0.75,
+    -- Weapons. Off, hits teach as they do in vanilla and misses nothing.
+    fairifyWeaponXP = true,
     -- A full-strength attack teaches this much more than the weakest, and one in between, in between.
     strongAttackBonus = 0.33,
     -- A swing that reached its target and missed teaches this share of what it would have had it hit.
     missShare = 0.2,
-    -- A line in the console (F10) and openmw.log for every gain this mod gives or changes.
-    logging = true,
+    -- A line in the console (F10) and openmw.log for every gain this mod gives or changes. Off by
+    -- default: it is for checking what the mod does, not for play.
+    logging = false,
 }
 
 M.values = {}
 for key, value in pairs(M.DEFAULTS) do M.values[key] = value end
 
-local sections = { storage.playerSection(M.GROUP), storage.playerSection(M.WEAPONS_GROUP) }
+local sections = {
+    storage.playerSection(M.MAGIC_GROUP),
+    storage.playerSection(M.WEAPONS_GROUP),
+    storage.playerSection(M.DEBUG_GROUP),
+}
 
 local function refresh()
     local stored = {}

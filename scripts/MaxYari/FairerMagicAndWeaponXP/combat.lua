@@ -13,7 +13,7 @@ interface.pickRandomArmor = function(actor)
     local item = combat.pickRandomArmor(actor)
     -- applyArmor asks with no actor, for this one's own; an actor passed in is someone asking about
     -- another.
-    local xp = I.FairerWeaponAndMagicXP
+    local xp = I.FairerMagicAndWeaponXP
     if actor == nil and xp then xp._armorStruck(item) end
     return item
 end

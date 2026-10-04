@@ -10,7 +10,7 @@
 local M = {}
 
 local here = arg[0]:gsub("[^/]*$", "")
-local root = os.getenv("FAIRER_WEAPON_AND_MAGIC_XP_MOD") or (here .. "../../..")
+local root = os.getenv("FAIRER_MAGIC_AND_WEAPON_XP_MOD") or (here .. "../../..")
 
 -- OpenMW resolves require("scripts/Foo/bar") against the VFS; plain Lua wants dots.
 table.insert(package.searchers or package.loaders, 1, function(name)
@@ -56,7 +56,7 @@ function M.reset()
         skillUsedHandlers = {},
         skillLevelUpHandlers = {},
         sections = {},           -- [storage section] = { key = value }, player and global alike
-        contentFiles = { ["MaxYariScriptServices.omwscripts"] = 1, ["FairerWeaponAndMagicXP.omwscripts"] = 2 },
+        contentFiles = { ["MaxYariScriptServices.omwscripts"] = 1, ["FairerMagicAndWeaponXP.omwscripts"] = 2 },
         messages = {},
         soundsPlaying = {},      -- [sound id] = true, on the player
         textKeys = {},           -- ["group: key"] = time; none, and the measured numbers are used
@@ -67,10 +67,12 @@ function M.reset()
         gmst = { fEffectCostMult = 0.5 },
     }
     for k, v in pairs(fresh) do S[k] = v end
-    S.settings = { logging = false } -- quiet; test_xp.lua turns it on where it checks it
-    S.sections.SettingsPlayerFairerWeaponAndMagicXP = S.settings
+    S.settings = {}
+    S.sections.SettingsPlayerFairerMagicAndWeaponXPMagic = S.settings
     S.weaponSettings = {}
-    S.sections.SettingsPlayerFairerWeaponAndMagicXPWeapons = S.weaponSettings
+    S.sections.SettingsPlayerFairerMagicAndWeaponXPWeapons = S.weaponSettings
+    S.debugSettings = { logging = false } -- quiet; test_xp.lua turns it on where it checks it
+    S.sections.SettingsPlayerFairerMagicAndWeaponXPDebug = S.debugSettings
     -- The engine's own handlers (playerskillhandlers.lua): first in, last to run.
     table.insert(S.skillUsedHandlers, function(skillid, params)
         S.taught[#S.taught + 1] = { skill = skillid, gain = params.skillGain, params = params }
@@ -98,7 +100,7 @@ function M.reset()
         getEquipment = function(slot) if slot == 16 then return S.right elseif slot == 17 then return S.left end end,
         addDamageListener = function(fn) S.damageListeners[#S.damageListeners + 1] = fn end,
     }
-    M.interfaces.FairerWeaponAndMagicXP = nil
+    M.interfaces.FairerMagicAndWeaponXP = nil
     M.interfaces.H2HWeapons = nil
 end
 
@@ -220,15 +222,25 @@ local WT = {
 }
 M.WT = WT
 local Weapon, Armor = { name = "Weapon", TYPE = WT }, { name = "Armor" }
-Weapon.record = function(o) return { id = o.recordId, name = o.name or o.recordId, value = o.value,
-    type = o.weaponType, speed = o.speed } end
+local itemsById = {} -- every M.item, by lowercase record id: what record(id) looks up
+Weapon.record = function(o)
+    if type(o) == "string" then
+        o = itemsById[string.lower(o)]
+        if not o then return nil end
+    end
+    return { id = o.recordId, name = o.name or o.recordId, value = o.value, type = o.weaponType, speed = o.speed }
+end
 Armor.record = Weapon.record
 
---- An item: kind "weapon" or "armor"; for a weapon, t = { type, speed, name }.
+--- An item: kind "weapon" or "armor"; for a weapon, t = { type, speed, name }. Set `gone` on it for one
+--- the engine has let go of, as a thrown weapon is once thrown.
 function M.item(kind, recordId, value, t)
     t = t or {}
-    return { type = kind == "armor" and Armor or Weapon, recordId = recordId, value = value or 0,
+    local item = { type = kind == "armor" and Armor or Weapon, recordId = recordId, value = value or 0,
         weaponType = t.type or WT.LongBladeOneHand, speed = t.speed or 1, name = t.name }
+    function item:isValid() return not self.gone end
+    itemsById[string.lower(recordId)] = item
+    return item
 end
 
 local Actor = {
@@ -301,12 +313,12 @@ function M.load(before)
     -- The scripts require each other by VFS path, slashes and all: that is the name they are cached
     -- under, and every one of them goes, so settings are read again.
     for name in pairs(package.loaded) do
-        if name:find("FairerWeaponAndMagicXP", 1, true) then package.loaded[name] = nil end
+        if name:find("FairerMagicAndWeaponXP", 1, true) then package.loaded[name] = nil end
     end
-    M.script = require("scripts/MaxYari/FairerWeaponAndMagicXP/player")
+    M.script = require("scripts/MaxYari/FairerMagicAndWeaponXP/player")
     if M.script.interfaceName then
-        interfaces.FairerWeaponAndMagicXP = M.script.interface
-        local combat = require("scripts/MaxYari/FairerWeaponAndMagicXP/combat")
+        interfaces.FairerMagicAndWeaponXP = M.script.interface
+        local combat = require("scripts/MaxYari/FairerMagicAndWeaponXP/combat")
         interfaces[combat.interfaceName] = combat.interface
         M.script.engineHandlers.onActive()
     end
@@ -315,14 +327,14 @@ end
 
 --- actor.lua, loaded on an NPC: returns the hit handler it gave I.Combat.
 function M.loadActor()
-    package.loaded["scripts/MaxYari/FairerWeaponAndMagicXP/actor"] = nil
+    package.loaded["scripts/MaxYari/FairerMagicAndWeaponXP/actor"] = nil
     S.onHitHandler = nil
-    require("scripts/MaxYari/FairerWeaponAndMagicXP/actor")
+    require("scripts/MaxYari/FairerMagicAndWeaponXP/actor")
     return S.onHitHandler
 end
 
-function M.formulas() return require("scripts/MaxYari/FairerWeaponAndMagicXP/scripts/formulas") end
-function M.swing() return require("scripts/MaxYari/FairerWeaponAndMagicXP/scripts/swing") end
+function M.formulas() return require("scripts/MaxYari/FairerMagicAndWeaponXP/scripts/formulas") end
+function M.swing() return require("scripts/MaxYari/FairerMagicAndWeaponXP/scripts/swing") end
 
 function M.textKey(group, key)
     for _, fn in ipairs(S.textKeyHandlers[group] or {}) do fn(group, key) end
@@ -371,7 +383,7 @@ end
 --- One of the player's attacks reported by the one it reached (actor.lua), the frame after.
 function M.report(t)
     M.update()
-    M.script.eventHandlers.FairerWeaponAndMagicXP_Attack({
+    M.script.eventHandlers.FairerMagicAndWeaponXP_Attack({
         successful = t.successful ~= false, strength = t.strength or 0, type = t.type, weapon = t.weapon,
     })
 end

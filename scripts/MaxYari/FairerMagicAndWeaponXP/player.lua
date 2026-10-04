@@ -20,10 +20,10 @@
 -- Everything goes through I.SkillProgression, so whatever else scales or redirects experience sees
 -- these as any other gain. The gains this script adds carry no useType: they are not casts, hits or
 -- armor uses, and a mod that reacts to those (a perk on every cast, say) must not take them for one.
--- They are marked instead with a `fairerWeaponAndMagicXP` field naming where they came from.
+-- They are marked instead with a `fairerMagicAndWeaponXP` field naming where they came from.
 --
--- With "Log experience" on (the default), every gain this mod gives or changes is one line in the
--- console and openmw.log: "[FairerWeaponAndMagicXP] <skill> <gain> | <what happened> | <multipliers, and why>".
+-- With "Debug Logging" on (it is off by default), every gain this mod gives or changes is one line in the
+-- console and openmw.log: "[FairerMagicAndWeaponXP] <skill> <gain> | <what happened> | <multipliers, and why>".
 --
 -- No engine object is fetched per frame, and nothing but a flag is read per frame. Everything hangs off
 -- events: text keys, skill uses, hit reports and health decreases (Max Yari's Script Services, which
@@ -39,12 +39,12 @@ local ui = require('openmw.ui')
 -- Max Yari's Script Services answers the equipment and effect reads, and reports the player's health
 -- decreases, from caches it shares with every mod asking. Required: say so once rather than fail.
 if not core.contentFiles.has("MaxYariScriptServices.omwscripts") then
-    print("[FairerWeaponAndMagicXP] ERROR: Max Yari's Script Services (MSS) is missing. It is required.")
-    ui.showMessage("Fairer Weapon and Magic Experience Gain: Max Yari's Script Services (MSS) is missing, please install it.")
+    print("[FairerMagicAndWeaponXP] ERROR: Max Yari's Script Services (MSS) is missing. It is required.")
+    ui.showMessage("Fairer Magic and Weapon Experience Gains for Sane People: Max Yari's Script Services (MSS) is missing, please install it.")
     return {}
 end
 
-local mp = "scripts/MaxYari/FairerWeaponAndMagicXP/"
+local mp = "scripts/MaxYari/FairerMagicAndWeaponXP/"
 local formulas = require(mp .. "scripts/formulas")
 local settings = require(mp .. "scripts/settings")
 local swing = require(mp .. "scripts/swing")
@@ -84,20 +84,36 @@ local ELEMENTAL_SHIELDS = {
 --- Settings page ----------------------------------------------------------------------------------
 local D = settings.DEFAULTS
 I.Settings.registerPage {
-    key = "FairerWeaponAndMagicXP",
-    l10n = "FairerWeaponAndMagicXP",
+    key = "FairerMagicAndWeaponXP",
+    l10n = "FairerMagicAndWeaponXP",
     name = "page_name",
     description = "page_description",
 }
+-- The banner, its renderer in menu.lua. A group with no name and nothing to store, ahead of the rest.
 I.Settings.registerGroup {
-    key = settings.GROUP,
-    page = "FairerWeaponAndMagicXP",
-    l10n = "FairerWeaponAndMagicXP",
-    name = "settings_group",
-    description = "settings_group_description",
+    key = settings.BANNER_GROUP,
+    page = "FairerMagicAndWeaponXP",
+    l10n = "FairerMagicAndWeaponXP",
+    name = "banner",
+    permanentStorage = false,
+    order = -1,
+    settings = {
+        { key = "banner", name = "banner", renderer = "FairerMagicAndWeaponXP_banner" },
+    },
+}
+I.Settings.registerGroup {
+    key = settings.MAGIC_GROUP,
+    page = "FairerMagicAndWeaponXP",
+    l10n = "FairerMagicAndWeaponXP",
+    name = "magic_group",
+    description = "magic_group_description",
     permanentStorage = true,
     order = 0,
     settings = {
+        {
+            key = "fairifyMagicXP", name = "fairify_magic_xp", description = "fairify_magic_xp_description",
+            default = D.fairifyMagicXP, renderer = "checkbox",
+        },
         {
             key = "baseCost", name = "base_cost", description = "base_cost_description",
             default = D.baseCost, renderer = "number", argument = { integer = true, min = 1, max = 1000 },
@@ -122,28 +138,20 @@ I.Settings.registerGroup {
             key = "shieldShare", name = "shield_share", description = "shield_share_description",
             default = D.shieldShare, renderer = "number", argument = { min = 0, max = 1 },
         },
-        {
-            key = "logging", name = "logging", description = "logging_description",
-            default = D.logging, renderer = "checkbox",
-        },
     },
 }
 I.Settings.registerGroup {
     key = settings.WEAPONS_GROUP,
-    page = "FairerWeaponAndMagicXP",
-    l10n = "FairerWeaponAndMagicXP",
+    page = "FairerMagicAndWeaponXP",
+    l10n = "FairerMagicAndWeaponXP",
     name = "weapons_group",
     description = "weapons_group_description",
     permanentStorage = true,
     order = 1,
     settings = {
         {
-            key = "meleeSwing", name = "melee_swing", description = "melee_swing_description",
-            default = D.meleeSwing, renderer = "number", argument = { min = 0.05, max = 5 },
-        },
-        {
-            key = "rangedSwing", name = "ranged_swing", description = "ranged_swing_description",
-            default = D.rangedSwing, renderer = "number", argument = { min = 0.05, max = 5 },
+            key = "fairifyWeaponXP", name = "fairify_weapon_xp", description = "fairify_weapon_xp_description",
+            default = D.fairifyWeaponXP, renderer = "checkbox",
         },
         {
             key = "strongAttackBonus", name = "strong_attack_bonus", description = "strong_attack_bonus_description",
@@ -155,14 +163,32 @@ I.Settings.registerGroup {
         },
     },
 }
+I.Settings.registerGroup {
+    key = settings.DEBUG_GROUP,
+    page = "FairerMagicAndWeaponXP",
+    l10n = "FairerMagicAndWeaponXP",
+    name = "debug_group",
+    permanentStorage = true,
+    order = 2,
+    settings = {
+        {
+            key = "logging", name = "logging", description = "logging_description",
+            default = D.logging, renderer = "checkbox",
+        },
+    },
+}
 
 --- Helpers ----------------------------------------------------------------------------------------
 local function costMultiplier(cost)
     return formulas.costMultiplier(cost, cfg.baseCost, cfg.topCost, cfg.maxMultiplier)
 end
 
+-- This many seconds of a weapon's weakest swing, wind-up to the end of the follow-through, teach what
+-- one vanilla hit does. Ranged attacks count their draw and reload, so theirs is a longer measure.
+local MELEE_SWING, RANGED_SWING = 0.5, 0.75
+
 local function swingMultiplier(seconds, ranged)
-    return formulas.swingMultiplier(seconds, ranged and cfg.rangedSwing or cfg.meleeSwing)
+    return formulas.swingMultiplier(seconds, ranged and RANGED_SWING or MELEE_SWING)
 end
 
 local function gainOf(skillId, useType)
@@ -189,10 +215,12 @@ local function skillName(skillId)
     return record and record.name or skillId
 end
 
+-- `weapon` is the item, or its record id for one that has left the hand (actor.lua).
 local function weaponName(weapon)
     if not weapon then return "bare fists" end
     local ok, record = pcall(types.Weapon.record, weapon)
-    return ok and record and record.name or weapon.recordId
+    if ok and record then return record.name end
+    return type(weapon) == "string" and weapon or weapon.recordId
 end
 
 -- From MSS's caches. Looked up on use, as its README asks: an interface appears only once its script
@@ -220,12 +248,12 @@ local function scheduleSettle()
 end
 
 --- Logging ----------------------------------------------------------------------------------------
--- One line per gain given or changed, when "Log experience" is on:
---   [FairerWeaponAndMagicXP] <skill> <gain> | <what happened> | <each multiplier, and why>
+-- One line per gain given or changed, when "Debug Logging" is on:
+--   [FairerMagicAndWeaponXP] <skill> <gain> | <what happened> | <each multiplier, and why>
 -- A gain this mod changes shows as "<before> -> <after>", one it adds as "+<gain>".
 local function log(skillId, change, event, multipliers)
     if not cfg.logging then return end
-    print(string.format("[FairerWeaponAndMagicXP] %s %s | %s | %s", skillName(skillId), change, event, multipliers))
+    print(string.format("[FairerMagicAndWeaponXP] %s %s | %s | %s", skillName(skillId), change, event, multipliers))
 end
 
 local function logChange(skillId, before, after, event, multipliers)
@@ -242,7 +270,7 @@ local function guarded(fn)
         if ok then return result end
         if not reported then
             reported = true
-            print("[FairerWeaponAndMagicXP] ERROR (later ones are not printed): " .. tostring(result))
+            print("[FairerMagicAndWeaponXP] ERROR (later ones are not printed): " .. tostring(result))
         end
     end
 end
@@ -264,7 +292,7 @@ local function capBelowLevelUp(skillid, params)
     if gain <= room then return end
     local capped = math.max(0, room)
     logChange(skillid, gain, capped, "capped at the next level",
-        "a " .. params.fairerWeaponAndMagicXP .. " cannot raise the skill: that takes a hit or a cast that works")
+        "a " .. params.fairerMagicAndWeaponXP .. " cannot raise the skill: that takes a hit or a cast that works")
     params.skillGain = capped
 end
 
@@ -282,7 +310,7 @@ local function teach(skillId, gain, source, event, multipliers)
     log(skillId, string.format("+%.2f", gain), event, multipliers)
     -- Let go of the skill whatever happens: an error in someone's handler must not leave it held.
     held = NO_LEVEL_UP[source] and skillId or nil
-    local ok, err = pcall(I.SkillProgression.skillUsed, skillId, { skillGain = gain, fairerWeaponAndMagicXP = source })
+    local ok, err = pcall(I.SkillProgression.skillUsed, skillId, { skillGain = gain, fairerMagicAndWeaponXP = source })
     held = nil
     if not ok then error(err, 0) end
 end
@@ -332,7 +360,7 @@ end
 local function castSucceeded(skillid, params)
     local cast = released
     released = nil
-    if not params.skillGain then return end
+    if not cfg.fairifyMagicXP or not params.skillGain then return end
     -- A cast some mod made without the animation has no release to go by: the selected spell is
     -- the best guess at what it was.
     local spell = cast and cast.spell or Actor.getSelectedSpell(omwself)
@@ -346,6 +374,7 @@ end
 
 -- A third of what the cast would have taught.
 local function miscast(cast)
+    if not cfg.fairifyMagicXP then return end
     local school = formulas.castSchool(cast.spell, skillValue)
     if not school then return end
     if not cast.paid then
@@ -353,7 +382,7 @@ local function miscast(cast)
         local sound = record and record.school and record.school.failureSound
         if not (sound and core.sound.isSoundPlaying(sound, omwself.object)) then
             if cfg.logging then
-                print(string.format("[FairerWeaponAndMagicXP] %s | not enough magicka | nothing cast, nothing learned",
+                print(string.format("[FairerMagicAndWeaponXP] %s | not enough magicka | nothing cast, nothing learned",
                     cast.spell.name))
             end
             return
@@ -406,7 +435,7 @@ local SHARE_EVENTS = {
 }
 
 local function addShare(params, from, school, share, source)
-    if school and share > 0 then
+    if cfg.fairifyMagicXP and school and share > 0 then
         shares[#shares + 1] = { params = params, from = from, skill = school, share = share, source = source }
         scheduleSettle()
     end
@@ -430,7 +459,7 @@ end
 
 local function weaponReason(profile, multiplier)
     return string.format("x%.2f for the weapon: its weakest swing takes %.2fs (1x per %.2fs %s)", multiplier,
-        profile.weak, profile.ranged and cfg.rangedSwing or cfg.meleeSwing, profile.ranged and "ranged" or "melee")
+        profile.weak, profile.ranged and RANGED_SWING or MELEE_SWING, profile.ranged and "ranged" or "melee")
 end
 
 -- What the strength adds, over the weakest attack: 0 for it, strongAttackBonus for a full one.
@@ -439,7 +468,7 @@ local function strengthBonus(strength)
 end
 
 local function weaponHit(skillid, params)
-    if not params.skillGain then return end
+    if not cfg.fairifyWeaponXP or not params.skillGain then return end
     local weapon = equipped(CARRIED_RIGHT)
     local profile = swing.profile(weapon)
     -- The last of a stack of thrown weapons leaves the hand before it lands.
@@ -461,8 +490,10 @@ local function katarsShare()
     return ok and type(share) == "number" and share or 0.7
 end
 
--- An attack of the player's that reached someone: { successful, strength, weapon } (actor.lua).
+-- An attack of the player's that reached someone: { successful, strength, weapon } (actor.lua), the
+-- weapon being the item, or its record id for one that has left the hand.
 local function onAttack(e)
+    if not cfg.fairifyWeaponXP then return end
     local bonus = strengthBonus(e.strength)
     local strengthReason = string.format("x%.2f for the strength, %.2f (x1 weakest, x%.2f full)", 1 + bonus,
         e.strength or 0, 1 + cfg.strongAttackBonus)
@@ -503,8 +534,8 @@ end
 -- Handlers run newest first, so this runs before the engine's own, which is the one that applies the
 -- gain.
 I.SkillProgression.addSkillUsedHandler(guarded(function(skillid, params)
-    if params.fairerWeaponAndMagicXP then
-        if NO_LEVEL_UP[params.fairerWeaponAndMagicXP] then capBelowLevelUp(skillid, params) end
+    if params.fairerMagicAndWeaponXP then
+        if NO_LEVEL_UP[params.fairerMagicAndWeaponXP] then capBelowLevelUp(skillid, params) end
         return
     end
     if params.useType ~= 0 then return end
@@ -536,7 +567,7 @@ end))
 local seen = {} -- [activeSpellId] = true for the spells there at the last look
 
 local function onDamaged()
-    if cfg.shieldShare <= 0 then return end
+    if not cfg.fairifyMagicXP or cfg.shieldShare <= 0 then return end
     local warded = nil
     for _, pair in ipairs(ELEMENTAL_SHIELDS) do
         if magnitude(pair.shield) > 0 then
@@ -594,7 +625,7 @@ local function onActive()
 end
 
 return {
-    interfaceName = "FairerWeaponAndMagicXP",
+    interfaceName = "FairerMagicAndWeaponXP",
     interface = {
         version = 1.0,
         --- What a successful cast of this spell record is multiplied by, with the current settings.
@@ -613,6 +644,6 @@ return {
         onUpdate = onUpdate,
     },
     eventHandlers = {
-        FairerWeaponAndMagicXP_Attack = guarded(onAttack),
+        FairerMagicAndWeaponXP_Attack = guarded(onAttack),
     },
 }

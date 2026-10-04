@@ -52,13 +52,12 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  # TODO: fill these in once the mod page exists (see the one-time setup above).
-  NEXUS_PAGE: https://www.nexusmods.com/morrowind/mods/CHANGEME
-  NEXUSMODS_FILE_ID: "CHANGEME"
-  NEXUSMODS_MOD_ID: "CHANGEME"
-  FILE_DISPLAY_NAME: Fairer Weapon and Magic Experience Gain - OpenMW
-  ZIP_NAME: FairerWeaponAndMagicXP
-  VERSION_SOURCE: scripts/MaxYari/FairerWeaponAndMagicXP/player.lua
+  NEXUS_PAGE: https://www.nexusmods.com/morrowind/mods/60448
+  NEXUSMODS_FILE_ID: "8081736"
+  NEXUSMODS_MOD_ID: "429496790048"
+  FILE_DISPLAY_NAME: FairerWeaponAndMagicXP
+  ZIP_NAME: FairerMagicAndWeaponXP
+  VERSION_SOURCE: scripts/MaxYari/FairerMagicAndWeaponXP/player.lua
 
 jobs:
   # The scripts are the part that can quietly break, and they run against fakes for the openmw API,

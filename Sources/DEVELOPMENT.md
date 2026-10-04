@@ -1,15 +1,17 @@
-# Fairer Weapon and Magic Experience Gain - technical notes
+# Fairer Magic and Weapon Experience Gains for Sane People - technical notes
 
 How the mod works and why its numbers are what they are, for modders and anyone curious. The
 user-facing README is at the repository root. Engine references are to OpenMW 0.51's source; paths
 are from the repository root. Requires OpenMW 0.51 and Max Yari's Script Services (MSS).
 
-Scripts (`scripts/MaxYari/FairerWeaponAndMagicXP/`):
+Scripts (`scripts/MaxYari/FairerMagicAndWeaponXP/`):
 
 - `player.lua` - everything the player learns. Arithmetic in `scripts/formulas.lua`, swing lengths in
   `scripts/swing.lua`, settings in `scripts/settings.lua`.
 - `combat.lua` (player) - wraps `I.Combat.pickRandomArmor`, to see which piece a hit lands on.
 - `actor.lua` (every NPC and creature) - reports the player's attacks on it.
+- `menu.lua` (menu) - the renderer for the banner on the settings page, which is
+  `textures/MaxYari/FairerMagicAndWeaponXP/banner.png`.
 
 ## Nothing per frame
 
@@ -234,6 +236,12 @@ never comes (half a second) has lost only that.
 **Misses.** A report with `successful = false` teaches the weapon's skill a fifth of what the hit would
 have: its gain × the weapon's multiplier × the strength's × 0.2.
 
+**Thrown weapons.** A thrown weapon reaches the struck actor's hit handler as a copy the engine made for
+the throw and has already let go of (`ProjectileManager`, the "bow" of a projectile that is its own
+launcher), and asking it anything throws; so does an arrow whose bow was put away while it flew.
+`actor.lua` sends the hit's ammunition, the projectile's record id, in its place, and the report is read
+from that record.
+
 **No level up from a miss or a miscast.** Their gains are capped in the skill used handler - after every
 newer handler has had its say - to leave
 the skill 0.001 of the way short of its next level: `(1 - 0.001 - progress) × requirement`, the
@@ -287,32 +295,32 @@ damage and teaches nothing.
 ## What this mod adds, as others see it
 
 Its own gains go through `I.SkillProgression.skillUsed` with a `skillGain`, no `useType`, and
-`fairerWeaponAndMagicXP` set to `"miscast"`, `"weaponHit"`, `"miss"`, `"boundWeapon"`, `"boundArmor"`,
+`fairerMagicAndWeaponXP` set to `"miscast"`, `"weaponHit"`, `"miss"`, `"boundWeapon"`, `"boundArmor"`,
 `"boundShield"`, `"shield"` or `"elementalShield"`. No `useType`, because they are not casts, hits or
 armor uses: Unofficial TR Spells fires its on-cast effects from a school's `Spellcast_Success`, Katars
 charges Mage Fury from it and splits every `Weapon_SuccessfulHit`, PerksOfMorrowind triggers perks on
 them - none of which a miscast or a miss should do. A successful cast's or hit's own gain is multiplied
 in place, and stays what it was.
 
-`I.FairerWeaponAndMagicXP` (player) has `spellMultiplier(spellRecord)`, `costMultiplier(cost)`,
+`I.FairerMagicAndWeaponXP` (player) has `spellMultiplier(spellRecord)`, `costMultiplier(cost)`,
 `spellCost(spellRecord)` and `swingProfile(weapon)`.
 
 ## Logging
 
-With "Log experience" on (the default), every gain this mod gives or changes is one `print` - the
+With "Debug Logging" on (it is off by default), every gain this mod gives or changes is one `print` - the
 console (F10) and openmw.log:
 
 ```
-[FairerWeaponAndMagicXP] <skill> <gain> | <what happened> | <each multiplier, and why>
+[FairerMagicAndWeaponXP] <skill> <gain> | <what happened> | <each multiplier, and why>
 
-[FairerWeaponAndMagicXP] Destruction 1.00 -> 2.27 | cast Lightning Storm | x2.27 for its cost, 34 magicka (1x up to 15, 5x from 75)
-[FairerWeaponAndMagicXP] Destruction +0.75 | miscast Lightning Storm | x2.27 for its cost, 34 magicka (1x up to 15, 5x from 75), x0.33 for a miscast
-[FairerWeaponAndMagicXP] Long Blade 1.00 -> 1.15 | hit with Steel Longsword | x1.15 for the weapon: its weakest swing takes 0.58s (1x per 0.50s melee); the strength when reported
-[FairerWeaponAndMagicXP] Long Blade +0.38 | hit with Steel Longsword, reported | x1.33 for the strength, 1.00 (x1 weakest, x1.33 full), over the 1.15 the hit taught
-[FairerWeaponAndMagicXP] Long Blade +0.23 | miss with Steel Longsword | x1.15 for the weapon: its weakest swing takes 0.58s (1x per 0.50s melee), x1.00 for the strength, 0.00 (x1 weakest, x1.33 full), x0.20 for a miss
-[FairerWeaponAndMagicXP] Conjuration +0.33 | hit with a bound weapon | x0.33 of Long Blade's 1.00
-[FairerWeaponAndMagicXP] Alteration +0.33 | Fire Damage taken under Fire Shield | the shield share, 0.33 of a vanilla use
-[FairerWeaponAndMagicXP] Fire Bite | not enough magicka | nothing cast, nothing learned
+[FairerMagicAndWeaponXP] Destruction 1.00 -> 2.27 | cast Lightning Storm | x2.27 for its cost, 34 magicka (1x up to 15, 5x from 75)
+[FairerMagicAndWeaponXP] Destruction +0.75 | miscast Lightning Storm | x2.27 for its cost, 34 magicka (1x up to 15, 5x from 75), x0.33 for a miscast
+[FairerMagicAndWeaponXP] Long Blade 1.00 -> 1.15 | hit with Steel Longsword | x1.15 for the weapon: its weakest swing takes 0.58s (1x per 0.50s melee); the strength when reported
+[FairerMagicAndWeaponXP] Long Blade +0.38 | hit with Steel Longsword, reported | x1.33 for the strength, 1.00 (x1 weakest, x1.33 full), over the 1.15 the hit taught
+[FairerMagicAndWeaponXP] Long Blade +0.23 | miss with Steel Longsword | x1.15 for the weapon: its weakest swing takes 0.58s (1x per 0.50s melee), x1.00 for the strength, 0.00 (x1 weakest, x1.33 full), x0.20 for a miss
+[FairerMagicAndWeaponXP] Conjuration +0.33 | hit with a bound weapon | x0.33 of Long Blade's 1.00
+[FairerMagicAndWeaponXP] Alteration +0.33 | Fire Damage taken under Fire Shield | the shield share, 0.33 of a vanilla use
+[FairerMagicAndWeaponXP] Fire Bite | not enough magicka | nothing cast, nothing learned
 ```
 
 ## Performance

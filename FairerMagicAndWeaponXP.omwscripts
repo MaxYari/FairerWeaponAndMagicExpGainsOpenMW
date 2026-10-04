@@ -1,8 +1,10 @@
 # Load after MaxYariScriptServices.omwscripts (required). Most of it is the player's own experience,
 # and I.SkillProgression, which it goes through, exists only on the player.
-PLAYER: scripts/MaxYari/FairerWeaponAndMagicXP/player.lua
+PLAYER: scripts/MaxYari/FairerMagicAndWeaponXP/player.lua
 # Wraps I.Combat's pick of the armor piece a hit lands on, to see a hit on bound armor.
-PLAYER: scripts/MaxYari/FairerWeaponAndMagicXP/combat.lua
+PLAYER: scripts/MaxYari/FairerMagicAndWeaponXP/combat.lua
 # Tells the player how each of its attacks on an NPC or creature went: type, strength, hit or miss.
 # One check per hit taken, nothing per frame.
-NPC, CREATURE: scripts/MaxYari/FairerWeaponAndMagicXP/actor.lua
+NPC, CREATURE: scripts/MaxYari/FairerMagicAndWeaponXP/actor.lua
+# The banner on the settings page: setting renderers can only be registered in the menu.
+MENU: scripts/MaxYari/FairerMagicAndWeaponXP/menu.lua
