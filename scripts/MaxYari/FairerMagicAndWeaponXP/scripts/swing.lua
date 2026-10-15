@@ -54,15 +54,17 @@ M.SKILL = {
     [WT.MarksmanBow] = "marksman", [WT.MarksmanCrossbow] = "marksman", [WT.MarksmanThrown] = "marksman",
 }
 
--- Katars and Knuckledusters' weapons swing with the hand-to-hand animations, whatever the engine
--- thinks they are: ReAnimation stretches the one-handed attack underneath to fit them.
--- A record id is never one: only a weapon that has left the hand comes as one.
-local function isKatarsWeapon(weapon)
+-- A hybrid weapon of Katars and Knuckledusters' (I.H2HWeapons.getHybridDefForItem): its definition, or nil.
+-- One swung with the hand-to-hand moveset - katars, knuckledusters - swings with the hand-to-hand
+-- animations, whatever the engine thinks it is: ReAnimation stretches the one-handed attack underneath
+-- to fit them. A record id is never one: only a weapon that has left the hand comes as one, and
+-- hybrids are melee weapons.
+local function hybridOf(weapon)
     local h2h = I.H2HWeapons
-    return weapon ~= nil and type(weapon) ~= "string" and h2h ~= nil and h2h.kindOfItem ~= nil
-        and h2h.kindOfItem(weapon) and true or false
+    if weapon == nil or type(weapon) == "string" or h2h == nil or h2h.getHybridDefForItem == nil then return nil end
+    return h2h.getHybridDefForItem(weapon) or nil
 end
-M.isKatarsWeapon = isKatarsWeapon
+M.hybridOf = hybridOf
 
 --- A weapon's swing, or bare fists' for nil: { group, speed, skill, ranged, weak }, weak being the
 --- seconds of its weakest swing at its speed. Nil for something that is no weapon. `weapon` is the
@@ -81,7 +83,8 @@ function M.profile(weapon)
     if not record then return nil end
     local speed = record.speed
     if not speed or speed <= 0 then return nil end
-    local group = isKatarsWeapon(weapon) and "handtohand" or GROUP[record.type]
+    local hybrid = hybridOf(weapon)
+    local group = (hybrid and hybrid.handToHand) and "handtohand" or GROUP[record.type]
     if not group then return nil end
     return { group = group, speed = speed, skill = M.SKILL[record.type], ranged = RANGED[record.type] or false,
         weak = M.WEAK_SWING[group] / speed }

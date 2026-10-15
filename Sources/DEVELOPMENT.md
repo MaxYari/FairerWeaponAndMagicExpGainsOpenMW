@@ -184,8 +184,8 @@ And the keys each weakest swing is made of, from "<type> start":
 | bowandarrow / crossbow / throwweapon | 0.933 / 0.200 / 0.133 | 1.333 / 0.200 / 0.200 | 1.400 / 0.200 / 0.267 | 1.467 / 0.333 / 0.333 | 0.400 / 1.199 / 0.466 | **1.400 / 1.532 / 0.665** |
 
 ReAnimation's tails (`<Type> Tail Start/Stop`, in `<group>extra` groups of their own) play after the
-follow-through, are cosmetic, and are not counted. Katars and Knuckledusters' weapons use the
-hand-to-hand lengths at their own speed: ReAnimation stretches the engine's one-handed attack to fit
+follow-through, are cosmetic, and are not counted. Katars and Knuckledusters' weapons swung with its
+hand-to-hand moveset use the hand-to-hand lengths at their own speed: ReAnimation stretches the engine's one-handed attack to fit
 their animations (`retimeParentToOverride`, section by section), and those are ReAnimation's
 hand-to-hand ones.
 
@@ -246,9 +246,8 @@ from that record.
 newer handler has had its say - to leave
 the skill 0.001 of the way short of its next level: `(1 - 0.001 - progress) × requirement`, the
 requirement from `I.SkillProgression.getSkillProgressRequirement`. A hit or a cast that works is what
-takes it over. For Katars and Knuckledusters' weapons it is split between Hand
-to Hand and the weapon skill by Katars' own share setting (`SettingsGlobalH2HWeapons.handToHandShare`),
-as Katars splits a hit.
+takes it over. For Katars and Knuckledusters' hybrid weapons it is split between the weapon's two
+skills by its own shares (`I.H2HWeapons.getHybridDefForItem`), as Katars splits a hit.
 
 The cap alone holds only while the handlers still to run pass the gain on as it is. Those are the older
 ones, of the mods loaded before this one, and some scale it: Sun's Dusk's well rested bonus, Perks of

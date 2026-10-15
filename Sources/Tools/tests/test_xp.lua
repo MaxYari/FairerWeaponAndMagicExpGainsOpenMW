@@ -307,8 +307,19 @@ stubs.report { strength = 1, weapon = nil }
 check(near(stubs.taughtTo("handtohand"), 0.8 * 1.33), "a full punch a third more", stubs.taughtTo("handtohand"))
 
 -- Katars and Knuckledusters' weapons swing with the hand-to-hand animations, at their own speed.
+-- Its hybrids: katars swing with the hand-to-hand moveset, and split a hit 70/30; the "flame mace" is a
+-- blunt weapon on Hand to Hand and Destruction that keeps its own animations.
 local function katars()
-    stubs.interfaces.H2HWeapons = { kindOfItem = function(item) return item.recordId:find("katar") and "katar" end }
+    stubs.interfaces.H2HWeapons = { getHybridDefForItem = function(item)
+        if item.recordId:find("katar") then
+            return { handToHand = true, primarySkill = "handtohand", secondarySkill = "shortblade",
+                     primaryExperience = 0.7, secondaryExperience = 0.3 }
+        elseif item.recordId:find("flame mace") then
+            return { handToHand = false, primarySkill = "handtohand", secondarySkill = "destruction",
+                     primaryExperience = 0.6, secondaryExperience = 0.5 }
+        end
+        return false
+    end }
 end
 stubs.load(katars)
 st.right = katar
@@ -331,11 +342,21 @@ check(near(stubs.taughtTo("longblade"), 0.2 * swordX), "a missed weak swing teac
 check(st.taught[1].params.fairerMagicAndWeaponXP == "miss", "as a miss")
 
 stubs.load(katars)
-st.sections.SettingsGlobalH2HWeapons = { handToHandShare = 0.7 }
 stubs.report { successful = false, strength = 1, weapon = katar }
 local whole = 0.2 * (0.4 / 0.9 / 0.5) * 1.33
 check(near(stubs.taughtTo("handtohand"), 0.7 * whole) and near(stubs.taughtTo("shortblade"), 0.3 * whole),
       "a missed katar: split as Katars splits a hit", stubs.taughtTo("handtohand"))
+
+local mace = stubs.item("weapon", "flame mace", 40, { type = WT.BluntOneHand, speed = 1.3 })
+stubs.load(katars)
+stubs.report { successful = false, strength = 0, weapon = mace }
+check(stubs.taughtTo("bluntweapon") == 0 and stubs.taughtTo("handtohand") > 0 and stubs.taughtTo("destruction") > 0,
+      "a missed hybrid on other skills teaches those, not the weapon's", stubs.taughtTo("bluntweapon"))
+check(near(stubs.taughtTo("handtohand") / stubs.taughtTo("destruction"), 0.6 / 0.5),
+      "by its own shares", stubs.taughtTo("handtohand") / stubs.taughtTo("destruction"))
+local swing = require("scripts/MaxYari/FairerMagicAndWeaponXP/scripts/swing")
+check(swing.profile(mace).group == "weapononehand", "and it keeps its own swing timing", swing.profile(mace).group)
+check(swing.profile(katar).group == "handtohand", "where a katar swings as a fist", swing.profile(katar).group)
 
 stubs.load()
 st.right = longsword

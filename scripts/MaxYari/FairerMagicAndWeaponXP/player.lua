@@ -32,7 +32,6 @@
 local core = require('openmw.core')
 local I = require('openmw.interfaces')
 local omwself = require('openmw.self')
-local storage = require('openmw.storage')
 local types = require('openmw.types')
 local ui = require('openmw.ui')
 
@@ -481,15 +480,6 @@ local function weaponHit(skillid, params)
     awaiting[#awaiting + 1] = { params = params, skill = skillid, time = core.getSimulationTime() }
 end
 
--- Katars and Knuckledusters splits a hit between Hand to Hand and the weapon skill by a setting of its
--- own; a miss, which it never hears of, is split the same way here.
-local function katarsShare()
-    local ok, share = pcall(function()
-        return storage.globalSection("SettingsGlobalH2HWeapons"):get("handToHandShare")
-    end)
-    return ok and type(share) == "number" and share or 0.7
-end
-
 -- An attack of the player's that reached someone: { successful, strength, weapon } (actor.lua), the
 -- weapon being the item, or its record id for one that has left the hand.
 local function onAttack(e)
@@ -519,12 +509,19 @@ local function onAttack(e)
     local why = string.format("%s, %s, x%.2f for a miss", weaponReason(profile, multiplier), strengthReason,
         cfg.missShare)
     local base = multiplier * (1 + bonus) * cfg.missShare
-    if swing.isKatarsWeapon(e.weapon) then
-        local share = katarsShare()
-        teach("handtohand", gainOf("handtohand", USE.Weapon_SuccessfulHit) * share * base, "miss", event,
-            string.format("%s, x%.2f Katars' Hand to Hand share", why, share))
-        teach(profile.skill, gainOf(profile.skill, USE.Weapon_SuccessfulHit) * (1 - share) * base, "miss",
-            event, string.format("%s, x%.2f Katars' weapon skill share", why, 1 - share))
+    -- A hybrid weapon of Katars and Knuckledusters' splits a hit between its two skills by its own
+    -- shares; a miss, which that mod never hears of, is split the same way here.
+    local hybrid = swing.hybridOf(e.weapon)
+    if hybrid then
+        local parts = { { hybrid.primarySkill, hybrid.primaryExperience },
+                        { hybrid.secondarySkill, hybrid.secondaryExperience } }
+        for _, part in ipairs(parts) do
+            local skill, share = part[1], part[2]
+            if share > 0 then
+                teach(skill, gainOf(skill, USE.Weapon_SuccessfulHit) * share * base, "miss", event,
+                    string.format("%s, x%.2f its %s share", why, share, skill))
+            end
+        end
     else
         teach(profile.skill, gainOf(profile.skill, USE.Weapon_SuccessfulHit) * base, "miss", event, why)
     end
